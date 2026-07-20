@@ -10,6 +10,9 @@ public class Patient {
     private String disease;
     private String admitDate;
 
+    public Patient() {
+    }
+
     public Patient(int id, String name, int age, String gender, String phone,
                    String address, String disease, String admitDate) {
         this.id = id;
@@ -30,6 +33,15 @@ public class Patient {
     public String getAddress() { return address; }
     public String getDisease() { return disease; }
     public String getAdmitDate() { return admitDate; }
+
+    public void setId(int id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setAge(int age) { this.age = age; }
+    public void setGender(String gender) { this.gender = gender; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public void setAddress(String address) { this.address = address; }
+    public void setDisease(String disease) { this.disease = disease; }
+    public void setAdmitDate(String admitDate) { this.admitDate = admitDate; }
 
     @Override
     public String toString() {

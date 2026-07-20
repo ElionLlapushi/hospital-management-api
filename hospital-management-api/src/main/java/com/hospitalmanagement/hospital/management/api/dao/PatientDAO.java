@@ -10,10 +10,10 @@ import java.util.List;
 public class PatientDAO {
 
     public int addPatient(String name, int age, String gender, String phone,
-                           String address, String disease, String admitDate) throws SQLException {
+                          String address, String disease, String admitDate) throws SQLException {
         String sql = "INSERT INTO patients (name, age, gender, phone, address, disease, admit_date) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setString(1, name);
             stmt.setInt(2, age);
             stmt.setString(3, gender);
@@ -22,10 +22,11 @@ public class PatientDAO {
             stmt.setString(6, disease);
             stmt.setString(7, admitDate);
             stmt.executeUpdate();
+        }
 
-            try (ResultSet keys = stmt.getGeneratedKeys()) {
-                if (keys.next()) return keys.getInt(1);
-            }
+        try (Statement idStmt = Database.getConnection().createStatement();
+             ResultSet rs = idStmt.executeQuery("SELECT last_insert_rowid()")) {
+            if (rs.next()) return rs.getInt(1);
         }
         return -1;
     }
@@ -66,7 +67,7 @@ public class PatientDAO {
     }
 
     public boolean updatePatient(int id, String name, int age, String gender, String phone,
-                                  String address, String disease) throws SQLException {
+                                 String address, String disease) throws SQLException {
         String sql = "UPDATE patients SET name=?, age=?, gender=?, phone=?, address=?, disease=? WHERE id=?";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setString(1, name);
