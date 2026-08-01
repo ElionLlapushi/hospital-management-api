@@ -42,6 +42,7 @@ public class PatientController {
         return "Patient added with ID: " + id;
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public String deletePatient(@PathVariable int id) throws SQLException {
         boolean deleted = patientDAO.deletePatient(id);
