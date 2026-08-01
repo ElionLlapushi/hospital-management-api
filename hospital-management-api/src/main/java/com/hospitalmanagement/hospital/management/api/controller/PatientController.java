@@ -2,6 +2,7 @@ package com.hospitalmanagement.hospital.management.api.controller;
 
 import com.hospitalmanagement.hospital.management.api.dao.PatientDAO;
 import com.hospitalmanagement.hospital.management.api.model.Patient;
+import com.hospitalmanagement.hospital.management.api.ResourceNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
@@ -20,7 +21,11 @@ public class PatientController {
 
     @GetMapping("/{id}")
     public Patient getPatientById(@PathVariable int id) throws SQLException {
-        return patientDAO.getPatientById(id);
+        Patient patient = patientDAO.getPatientById(id);
+        if (patient == null) {
+            throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet");
+        }
+        return patient;
     }
 
     @PostMapping
