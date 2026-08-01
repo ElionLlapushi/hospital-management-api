@@ -35,39 +35,45 @@ public class Database {
     // works no matter what working directory the program is launched from.
     private static final String SCHEMA_SQL =
             "CREATE TABLE IF NOT EXISTS doctors (" +
-            "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
-            "    name            TEXT NOT NULL," +
-            "    specialization  TEXT NOT NULL," +
-            "    phone           TEXT" +
-            ");" +
-            "CREATE TABLE IF NOT EXISTS patients (" +
-            "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
-            "    name            TEXT NOT NULL," +
-            "    age             INTEGER NOT NULL," +
-            "    gender          TEXT," +
-            "    phone           TEXT," +
-            "    address         TEXT," +
-            "    disease         TEXT," +
-            "    admit_date      TEXT" +
-            ");" +
-            "CREATE TABLE IF NOT EXISTS appointments (" +
-            "    id                  INTEGER PRIMARY KEY AUTOINCREMENT," +
-            "    patient_id          INTEGER NOT NULL," +
-            "    doctor_id           INTEGER NOT NULL," +
-            "    appointment_date    TEXT NOT NULL," +
-            "    status              TEXT DEFAULT 'Scheduled'," +
-            "    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE," +
-            "    FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE" +
-            ");" +
-            "CREATE TABLE IF NOT EXISTS bills (" +
-            "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
-            "    patient_id      INTEGER NOT NULL," +
-            "    description     TEXT," +
-            "    amount          REAL NOT NULL," +
-            "    paid            INTEGER DEFAULT 0," +
-            "    bill_date       TEXT," +
-            "    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE" +
-            ");";
+                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    name            TEXT NOT NULL," +
+                    "    specialization  TEXT NOT NULL," +
+                    "    phone           TEXT" +
+                    ");" +
+                    "CREATE TABLE IF NOT EXISTS patients (" +
+                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    name            TEXT NOT NULL," +
+                    "    age             INTEGER NOT NULL," +
+                    "    gender          TEXT," +
+                    "    phone           TEXT," +
+                    "    address         TEXT," +
+                    "    disease         TEXT," +
+                    "    admit_date      TEXT" +
+                    ");" +
+                    "CREATE TABLE IF NOT EXISTS appointments (" +
+                    "    id                  INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    patient_id          INTEGER NOT NULL," +
+                    "    doctor_id           INTEGER NOT NULL," +
+                    "    appointment_date    TEXT NOT NULL," +
+                    "    status              TEXT DEFAULT 'Scheduled'," +
+                    "    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE," +
+                    "    FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE" +
+                    ");" +
+                    "CREATE TABLE IF NOT EXISTS bills (" +
+                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    patient_id      INTEGER NOT NULL," +
+                    "    description     TEXT," +
+                    "    amount          REAL NOT NULL," +
+                    "    paid            INTEGER DEFAULT 0," +
+                    "    bill_date       TEXT," +
+                    "    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE" +
+                    ");" +
+                    "CREATE TABLE IF NOT EXISTS users (" +
+                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    username        TEXT NOT NULL UNIQUE," +
+                    "    password        TEXT NOT NULL," +
+                    "    role            TEXT NOT NULL DEFAULT 'STAFF'" +
+                    ");";
 
     // Runs the schema once at startup so tables always exist
     public static void initializeSchema() {
