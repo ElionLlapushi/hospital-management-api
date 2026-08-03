@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="sq" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 CSS & JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- html2pdf JS për gjenerimin e PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- SheetJS për Eksport në Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            background-color: var(--bs-body-bg);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card-custom {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+        .btn-hospital {
+            background: linear-gradient(135deg, #0056b3 0%, #008080 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .btn-hospital:hover {
+            opacity: 0.95;
+            color: white;
+        }
+        .header-bg {
+            background: linear-gradient(135deg, #0056b3 0%, #00a896 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            padding: 16px 20px;
+        }
+        .stat-card {
+            border-left: 5px solid #0056b3;
+            border-radius: 12px;
+        }
+        .badge-disease {
+            background-color: rgba(0, 86, 179, 0.1);
+            color: #0056b3;
+            border: 1px solid rgba(0, 86, 179, 0.2);
+            font-weight: 600;
+        }
+        /* Stili i Faturës që do të gjenerohet në PDF */
+        #invoiceTemplate {
+            padding: 30px;
+            background: #fff;
+            color: #333;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+
+    <!-- BAR E KRYES ME THEME TOGGLE -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-outline-secondary btn-sm rounded-circle" id="themeToggle" onclick="toggleTheme()" title="Ndrysho Temën">
+            <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+    </div>
+
+    <!-- SEKSIONI 1: LOGIN -->
+    <div id="loginSection" class="row justify-content-center py-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card card-custom">
+                <div class="header-bg text-center">
+                    <h3 class="mb-1"><i class="fa-solid fa-hospital-user me-2"></i>Sistemi i Spitalit</h3>
+                    <p class="mb-0 small opacity-75">Identifikohuni për të vazhduar</p>
+                </div>
+                <div class="card-body p-4">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Përdoruesi (Username)</label>
+                            <input type="text" id="loginUsername" class="form-control" placeholder="Elion" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Fjalëkalimi (Password)</label>
+                            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-hospital w-100 py-2 mt-2">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i>Hyni në Sistem
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEKSIONI 2: DASHBOARD -->
+    <div id="dashboardSection" class="d-none">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-body-tertiary p-3 rounded-4 shadow-sm border">
+            <div>
+                <h4 class="mb-0 text-primary fw-bold"><i class="fa-solid fa-clinic-medical me-2"></i>Paneli i Menaxhimit</h4>
+                <small class="text-muted">Sistemi i Menaxhimit të Pacientëve dhe Mjekëve</small>
+            </div>
+            <button class="btn btn-outline-danger btn-sm px-3 rounded-3" onclick="logout()">
+                <i class="fa-solid fa-power-off me-1"></i> Dalje
+            </button>
+        </div>
+
+        <!-- Kartelat e Statistikave -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card card-custom p-3 stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Totali i Pacientëve</span>
+                            <h3 id="statTotal" class="mb-0 fw-bold">0</h3>
+                        </div>
+                        <i class="fa-solid fa-users fa-2x text-primary opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-custom p-3 stat-card" style="border-left-color: #28a745;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Shtrimet Sot</span>
+                            <h3 id="statToday" class="mb-0 fw-bold">0</h3>
+                        </div>
+                        <i class="fa-solid fa-user-check fa-2x text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-custom p-3 stat-card" style="border-left-color: #ffc107;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Statusi i Serverit</span>
+                            <h5 class="mb-0 text-success fw-bold">Aktiv <i class="fa-solid fa-circle fa-2xs"></i></h5>
+                        </div>
+                        <i class="fa-solid fa-server fa-2x text-warning opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Formular i Shtimit -->
+            <div class="col-lg-4">
+                <div class="card card-custom">
+                    <div class="header-bg">
+                        <h5 class="mb-0"><i class="fa-solid fa-user-plus me-2"></i>Shto Pacient</h5>
+                    </div>
+                    <div class="card-body p-3">
+                        <form id="patientForm">
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Emri & Mbiemri</label>
+                                <input type="text" id="pName" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold mb-1">Mosha</label>
+                                    <input type="number" id="pAge" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold mb-1">Gjinia</label>
+                                    <select id="pGender" class="form-select form-select-sm" required>
+                                        <option value="Male">Mashkull</option>
+                                        <option value="Female">Femër</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- SELEKTIMI I MJEKUT -->
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Mjeku Trajtues</label>
+                                <select id="pDoctor" class="form-select form-select-sm" required>
+                                    <option value="Dr. Arben Hoxha (Kardiolog)">Dr. Arben Hoxha (Kardiolog)</option>
+                                    <option value="Dr. Teuta Prifti (Pediatre)">Dr. Teuta Prifti (Pediatre)</option>
+                                    <option value="Dr. Ilir Meta (Kirurg)">Dr. Ilir Meta (Kirurg)</option>
+                                    <option value="Dr. Elena Rama (Neurologe)">Dr. Elena Rama (Neurologe)</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Telefoni</label>
+                                <input type="text" id="pPhone" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Adresa</label>
+                                <input type="text" id="pAddress" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Sëmundja / Diagnoza</label>
+                                <input type="text" id="pDisease" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold mb-1">Data e Pranimit</label>
+                                <input type="date" id="pAdmitDate" class="form-control form-control-sm" required>
+                            </div>
+                            <button type="submit" class="btn btn-hospital w-100 btn-sm py-2">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Ruaj Pacientin
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela & Kërkimi -->
+            <div class="col-lg-8">
+                <div class="card card-custom">
+                    <div class="header-bg d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fa-solid fa-list me-2"></i>Lista e Pacientëve</h5>
+                        <div>
+                            <!-- BUTONI I EKSPORTIT NË EXCEL -->
+                            <button class="btn btn-sm btn-success me-1" onclick="exportToExcel()" title="Eksporto në Excel">
+                                <i class="fa-solid fa-file-excel me-1"></i> Excel
+                            </button>
+                            <button class="btn btn-sm btn-light rounded-circle" onclick="loadPatients()" title="Rifresko">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+
+                        <!-- Search Bar në Kohë Reale -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-body-tertiary"><i class="fa-solid fa-magnifying-glass"></i></span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Kërko sipas emrit, diagnozës ose mjekut..." onkeyup="filterPatients()">
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Emri</th>
+                                    <th>Diagnoza</th>
+                                    <th>Mjeku</th>
+                                    <th>Telefoni</th>
+                                    <th>Data</th>
+                                    <th class="text-center">Veprime</th>
+                                </tr>
+                                </thead>
+                                <tbody id="patientsTableBody">
+                                <!-- Mbushet nga JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- STRUKTURA E PADUKSHME E FATURËS (Për gjenerimin e PDF) -->
+<div class="d-none">
+    <div id="invoiceTemplate">
+        <div style="text-align: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 20px;">
+            <h2 style="color: #0056b3; margin: 0;">SPITALI QENDROR</h2>
+            <p style="margin: 5px 0; font-size: 14px; color: #666;">Faturë Mjekësore & Kartelë Pranimi</p>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <p><strong>Nr. Faturës:</strong> #INV-<span id="pdfId"></span></p>
+            <p><strong>Data e Pranimit:</strong> <span id="pdfDate"></span></p>
+            <p><strong>Emri & Mbiemri:</strong> <span id="pdfName"></span></p>
+            <p><strong>Mosha:</strong> <span id="pdfAge"></span> vjeç | <strong>Gjinia:</strong> <span id="pdfGender"></span></p>
+            <p><strong>Adresa:</strong> <span id="pdfAddress"></span></p>
+            <p><strong>Telefoni:</strong> <span id="pdfPhone"></span></p>
+        </div>
+        <hr>
+        <div style="margin-bottom: 30px;">
+            <p><strong>Diagnoza:</strong> <span id="pdfDisease" style="color: #0056b3;"></span></p>
+            <p><strong>Mjeku Trajtues:</strong> <span id="pdfDoctor"></span></p>
+        </div>
+        <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+            <div>___________________<br><small>Nënshkrimi i Pacientit</small></div>
+            <div>___________________<br><small>Vula & Nënshkrimi i Mjekut</small></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8080/api";
+    let globalPatients = [];
+
+    document.getElementById('pAdmitDate').valueAsDate = new Date();
+
+    // LOGIN
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('jwtToken', data.token);
+
+                document.getElementById('loginSection').classList.add('d-none');
+                document.getElementById('dashboardSection').classList.remove('d-none');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Mirëseerdhët!',
+                    text: 'Identifikimi u krye me sukses.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                loadPatients();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Dështoi Hyrja', text: 'Kredencialet janë të gabuara!' });
+            }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gabim Lidhjeje', text: 'Nuk ka lidhje me serverin!' });
+        }
+    });
+
+    // SHTO PACIENT
+    document.getElementById('patientForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('jwtToken');
+
+        const doctorSelected = document.getElementById('pDoctor').value;
+        const diseaseInput = document.getElementById('pDisease').value;
+
+        const patientData = {
+            name: document.getElementById('pName').value,
+            age: parseInt(document.getElementById('pAge').value),
+            gender: document.getElementById('pGender').value,
+            phone: document.getElementById('pPhone').value,
+            address: document.getElementById('pAddress').value,
+            // Bashkojmë mjekun me sëmundjen te fusha disease për ruajtje
+            disease: `${diseaseInput} (${doctorSelected})`,
+            admitDate: document.getElementById('pAdmitDate').value
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/patients`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(patientData)
+            });
+
+            if (response.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'U Regjistrua!',
+                    text: 'Pacienti u ruajt me sukses.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                document.getElementById('patientForm').reset();
+                document.getElementById('pAdmitDate').valueAsDate = new Date();
+                loadPatients();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Gabim', text: 'Dështoi ruajtja e pacientit!' });
+            }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gabim Serveri', text: 'Nuk u dërgua kërkesa!' });
+        }
+    });
+
+    // MARRJA E PACIENTËVE
+    async function loadPatients() {
+        const token = localStorage.getItem('jwtToken');
+
+        try {
+            const response = await fetch(`${API_URL}/patients`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                globalPatients = await response.json();
+
+                document.getElementById('statTotal').innerText = globalPatients.length;
+                const todayStr = new Date().toISOString().split('T')[0];
+                const todayCount = globalPatients.filter(p => p.admitDate === todayStr).length;
+                document.getElementById('statToday').innerText = todayCount;
+
+                renderTable(globalPatients);
+            }
+        } catch (err) {
+            console.error("Gabim te loadPatients:", err);
+        }
+    }
+
+    // RENDERIZIMI I TABELËS
+    function renderTable(patientsList) {
+        const tableBody = document.getElementById('patientsTableBody');
+        tableBody.innerHTML = '';
+
+        if (patientsList.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">Nuk u gjet asnjë pacient.</td></tr>`;
+            return;
+        }
+
+        patientsList.forEach(p => {
+            // Ndajmë diagnozën nga mjeku për paraqitje të pastër
+            let diseaseClean = p.disease;
+            let doctorName = "Dr. Përgjithshëm";
+
+            if (p.disease.includes('(')) {
+                const parts = p.disease.split('(');
+                diseaseClean = parts[0].trim();
+                doctorName = parts[1].replace(')', '').trim();
+            }
+
+            tableBody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">#${p.id}</td>
+                    <td><i class="fa-solid fa-user me-2 text-secondary opacity-50"></i>${p.name}</td>
+                    <td><span class="badge badge-disease px-2 py-1 rounded-2">${diseaseClean}</span></td>
+                    <td class="small text-muted"><i class="fa-solid fa-user-doctor me-1 text-primary"></i>${doctorName}</td>
+                    <td class="small">${p.phone}</td>
+                    <td class="small">${p.admitDate}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary border-0" onclick="generatePDF(${p.id})" title="Shkarko Faturën (PDF)">
+                            <i class="fa-solid fa-file-pdf"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger border-0" onclick="deletePatient(${p.id})" title="Fshi Pacientin">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // FILTRIMI NË KOHË REALE
+    function filterPatients() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = globalPatients.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            p.disease.toLowerCase().includes(query)
+        );
+        renderTable(filtered);
+    }
+
+    // 1. FUNKSIONI I GJENERIMIT TË FATURËS NË PDF
+    function generatePDF(id) {
+        const patient = globalPatients.find(p => p.id === id);
+        if (!patient) return;
+
+        let diseaseClean = patient.disease;
+        let doctorName = "Dr. Përgjithshëm";
+
+        if (patient.disease.includes('(')) {
+            const parts = patient.disease.split('(');
+            diseaseClean = parts[0].trim();
+            doctorName = parts[1].replace(')', '').trim();
+        }
+
+        // Mbushim shabllonin e padukshëm me të dhëna
+        document.getElementById('pdfId').innerText = patient.id;
+        document.getElementById('pdfDate').innerText = patient.admitDate;
+        document.getElementById('pdfName').innerText = patient.name;
+        document.getElementById('pdfAge').innerText = patient.age;
+        document.getElementById('pdfGender').innerText = patient.gender || "Mashkull";
+        document.getElementById('pdfAddress').innerText = patient.address;
+        document.getElementById('pdfPhone').innerText = patient.phone;
+        document.getElementById('pdfDisease').innerText = diseaseClean;
+        document.getElementById('pdfDoctor').innerText = doctorName;
+
+        const element = document.getElementById('invoiceTemplate');
+
+        const opt = {
+            margin:       10,
+            filename:     `Fatura_Pacienti_${patient.name.replace(/\s+/g, '_')}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // 2. FUNKSIONI I EKSPORTIT NË EXCEL
+    function exportToExcel() {
+        if (globalPatients.length === 0) {
+            Swal.fire('Kujdes', 'Nuk ka të dhëna për të eksportuar!', 'warning');
+            return;
+        }
+
+        const dataToExport = globalPatients.map(p => ({
+            ID: p.id,
+            Emri: p.name,
+            Mosha: p.age,
+            Gjinia: p.gender,
+            Adresa: p.address,
+            Telefoni: p.phone,
+            Diagnoza_Dhe_Mjeku: p.disease,
+            Data_Pranimit: p.admitDate
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Pacientet");
+
+        XLSX.writeFile(workbook, "Lista_e_Pacienteve.xlsx");
+    }
+
+    // FSHIRJA E PACIENTIT
+    function deletePatient(id) {
+        Swal.fire({
+            title: 'A je i sigurt?',
+            text: `Pacienti #${id} do të fshihet nga baza e të dhënave!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Po, fshije!',
+            cancelButtonText: 'Anulo'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const token = localStorage.getItem('jwtToken');
+                try {
+                    const response = await fetch(`${API_URL}/patients/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        Swal.fire('U Fshi!', 'Pacienti u fshi me sukses.', 'success');
+                        loadPatients();
+                    } else {
+                        Swal.fire('Gabim', 'Nuk u fshi dot pacienti!', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Gabim', 'Serveri nuk përgjigjet!', 'error');
+                }
+            }
+        });
+    }
+
+    // DARK / LIGHT MODE
+    function toggleTheme() {
+        const html = document.documentElement;
+        const icon = document.getElementById('themeIcon');
+
+        if (html.getAttribute('data-bs-theme') === 'light') {
+            html.setAttribute('data-bs-theme', 'dark');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        } else {
+            html.setAttribute('data-bs-theme', 'light');
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('jwtToken');
+        document.getElementById('dashboardSection').classList.add('d-none');
+        document.getElementById('loginSection').classList.remove('d-none');
+    }
+</script>
+
+</body>
+</html>
