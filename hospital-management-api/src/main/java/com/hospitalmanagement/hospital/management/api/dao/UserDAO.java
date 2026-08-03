@@ -2,9 +2,11 @@ package com.hospitalmanagement.hospital.management.api.dao;
 
 import com.hospitalmanagement.hospital.management.api.db.Database;
 import com.hospitalmanagement.hospital.management.api.model.User;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
+@Repository
 public class UserDAO {
 
     public int addUser(String username, String hashedPassword, String role) throws SQLException {
