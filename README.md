@@ -97,7 +97,7 @@ src/main/java/com/hospitalmanagement/hospital/management/api/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/ElionLlapushi/hospital-management.git
+git clone https://github.com/ElionLlapushi/hospital-management-api.git
 cd hospital-management-api
 ```
 
