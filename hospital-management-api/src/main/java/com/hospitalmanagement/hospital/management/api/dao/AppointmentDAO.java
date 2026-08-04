@@ -11,7 +11,7 @@ public class AppointmentDAO {
 
     public int bookAppointment(int patientId, int doctorId, String date) throws SQLException {
         String sql = "INSERT INTO appointments (patient_id, doctor_id, appointment_date, status) " +
-                     "VALUES (?, ?, ?, 'Scheduled')";
+                "VALUES (?, ?, ?, 'Scheduled')";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, patientId);
             stmt.setInt(2, doctorId);
@@ -24,19 +24,36 @@ public class AppointmentDAO {
         return -1;
     }
 
-    // JOIN with patients and doctors so we can display readable names, not just IDs
+    // JOIN me tabelat patients dhe doctors për të marrë emrat e lexueshëm
     private static final String SELECT_WITH_NAMES =
             "SELECT a.id, a.patient_id, a.doctor_id, p.name AS patient_name, " +
-            "d.name AS doctor_name, a.appointment_date, a.status " +
-            "FROM appointments a " +
-            "JOIN patients p ON a.patient_id = p.id " +
-            "JOIN doctors d ON a.doctor_id = d.id ";
+                    "d.name AS doctor_name, a.appointment_date, a.status " +
+                    "FROM appointments a " +
+                    "JOIN patients p ON a.patient_id = p.id " +
+                    "JOIN doctors d ON a.doctor_id = d.id ";
 
     public List<Appointment> getAllAppointments() throws SQLException {
         List<Appointment> list = new ArrayList<>();
         try (Statement stmt = Database.getConnection().createStatement();
              ResultSet rs = stmt.executeQuery(SELECT_WITH_NAMES + "ORDER BY a.id")) {
             while (rs.next()) list.add(mapRow(rs));
+        }
+        return list;
+    }
+
+    // Metoda e re: Merr të gjitha vizitat e një mjeku për një datë të caktuar
+    public List<Appointment> getAppointmentsByDoctorAndDate(int doctorId, String date) throws SQLException {
+        List<Appointment> list = new ArrayList<>();
+        String sql = SELECT_WITH_NAMES + "WHERE a.doctor_id = ? AND a.appointment_date LIKE ? ORDER BY a.id";
+
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
+            stmt.setInt(1, doctorId);
+            stmt.setString(2, date + "%");
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
         }
         return list;
     }
@@ -70,3 +87,4 @@ public class AppointmentDAO {
         );
     }
 }
+
