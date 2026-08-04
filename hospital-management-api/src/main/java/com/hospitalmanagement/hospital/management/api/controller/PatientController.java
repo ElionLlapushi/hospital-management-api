@@ -3,6 +3,9 @@ package com.hospitalmanagement.hospital.management.api.controller;
 import com.hospitalmanagement.hospital.management.api.dao.PatientDAO;
 import com.hospitalmanagement.hospital.management.api.model.Patient;
 import com.hospitalmanagement.hospital.management.api.ResourceNotFoundException;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
@@ -10,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/patients")
+@CrossOrigin(origins = "*")
 public class PatientController {
 
     private final PatientDAO patientDAO = new PatientDAO();
@@ -29,23 +33,32 @@ public class PatientController {
     }
 
     @PostMapping
-    public String addPatient(@RequestBody Patient patient) throws SQLException {
-        int id = patientDAO.addPatient(
-                patient.getName(),
-                patient.getAge(),
-                patient.getGender(),
-                patient.getPhone(),
-                patient.getAddress(),
-                patient.getDisease(),
-                patient.getAdmitDate()
-        );
-        return "Patient added with ID: " + id;
+    public ResponseEntity<Patient> addPatient(@Valid @RequestBody Patient patient) throws SQLException {
+        patientDAO.addPatient(patient);
+        return new ResponseEntity<>(patient, HttpStatus.CREATED);
     }
 
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<Patient> updatePatient(@PathVariable int id, @Valid @RequestBody Patient patientDetails) throws SQLException {
+        Patient existingPatient = patientDAO.getPatientById(id);
+        if (existingPatient == null) {
+            throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet për t'u përditësuar");
+        }
+
+        patientDetails.setId(id);
+        patientDAO.updatePatient(patientDetails);
+
+        return ResponseEntity.ok(patientDetails);
+    }
+
     @DeleteMapping("/{id}")
-    public String deletePatient(@PathVariable int id) throws SQLException {
-        boolean deleted = patientDAO.deletePatient(id);
-        return deleted ? "Deleted." : "Patient not found.";
+    public ResponseEntity<Void> deletePatient(@PathVariable int id) throws SQLException {
+        Patient patient = patientDAO.getPatientById(id);
+        if (patient == null) {
+            throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet për t'u fshirë");
+        }
+
+        patientDAO.deletePatient(id);
+        return ResponseEntity.noContent().build();
     }
 }
