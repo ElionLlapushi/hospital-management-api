@@ -11,16 +11,15 @@ public class UserDAO {
 
     public int addUser(String username, String hashedPassword, String role) throws SQLException {
         String sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
-        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, username);
             stmt.setString(2, hashedPassword);
             stmt.setString(3, role);
             stmt.executeUpdate();
-        }
 
-        try (Statement idStmt = Database.getConnection().createStatement();
-             ResultSet rs = idStmt.executeQuery("SELECT last_insert_rowid()")) {
-            if (rs.next()) return rs.getInt(1);
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
+            }
         }
         return -1;
     }
