@@ -1,15 +1,18 @@
 version: '3.8'
 
 services:
-  mysqldb:
-    image: mysql:8.0
+  postgresdb:
+    image: postgres:16
     container_name: hospital_db
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: hospital_db
+      POSTGRES_DB: hospital
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
     restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   backend:
     build: .
@@ -17,10 +20,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb:3306/hospital_db?createDatabaseIfNotExist=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      DATABASE_URL: jdbc:postgresql://postgresdb:5432/hospital
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
     depends_on:
-      - mysqldb
+      - postgresdb
     restart: always
+
+volumes:
+  postgres_data:

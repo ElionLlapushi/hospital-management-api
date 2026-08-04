@@ -11,37 +11,45 @@ import java.sql.Statement;
  */
 public class Database {
 
-    private static final String DB_URL = System.getProperty("db.url", "jdbc:sqlite:hospital.db");
+    // Reads connection info from environment variables (set these on your
+    // hosting platform, and locally via docker-compose or your IDE run config).
+    // Falls back to a local Postgres instance for local development.
+    private static final String DB_URL = System.getenv().getOrDefault(
+            "DATABASE_URL", "jdbc:postgresql://localhost:5432/hospital");
+    private static final String DB_USER = System.getenv().getOrDefault("DATABASE_USER", "postgres");
+    private static final String DB_PASSWORD = System.getenv().getOrDefault("DATABASE_PASSWORD", "postgres");
+
     private static Connection connection;
 
     static {
         try {
-            Class.forName("org.sqlite.JDBC");
+            Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            System.err.println("SQLite JDBC driver not found on classpath: " + e.getMessage());
+            System.err.println("PostgreSQL JDBC driver not found on classpath: " + e.getMessage());
         }
     }
 
     // Get the shared connection (creates it once, reuses it after)
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(DB_URL);
-            connection.createStatement().execute("PRAGMA foreign_keys = ON");
+            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
         }
         return connection;
     }
 
     // Schema is embedded directly here (not read from an external file) so it
     // works no matter what working directory the program is launched from.
+    // Note: syntax adjusted for PostgreSQL (SERIAL instead of AUTOINCREMENT,
+    // BOOLEAN instead of INTEGER 0/1 for flags).
     private static final String SCHEMA_SQL =
             "CREATE TABLE IF NOT EXISTS doctors (" +
-                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    id              SERIAL PRIMARY KEY," +
                     "    name            TEXT NOT NULL," +
                     "    specialization  TEXT NOT NULL," +
                     "    phone           TEXT" +
                     ");" +
                     "CREATE TABLE IF NOT EXISTS patients (" +
-                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    id              SERIAL PRIMARY KEY," +
                     "    name            TEXT NOT NULL," +
                     "    age             INTEGER NOT NULL," +
                     "    gender          TEXT," +
@@ -51,7 +59,7 @@ public class Database {
                     "    admit_date      TEXT" +
                     ");" +
                     "CREATE TABLE IF NOT EXISTS appointments (" +
-                    "    id                  INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    id                  SERIAL PRIMARY KEY," +
                     "    patient_id          INTEGER NOT NULL," +
                     "    doctor_id           INTEGER NOT NULL," +
                     "    appointment_date    TEXT NOT NULL," +
@@ -60,7 +68,7 @@ public class Database {
                     "    FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE" +
                     ");" +
                     "CREATE TABLE IF NOT EXISTS bills (" +
-                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    id              SERIAL PRIMARY KEY," +
                     "    patient_id      INTEGER NOT NULL," +
                     "    description     TEXT," +
                     "    amount          REAL NOT NULL," +
@@ -69,7 +77,7 @@ public class Database {
                     "    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE" +
                     ");" +
                     "CREATE TABLE IF NOT EXISTS users (" +
-                    "    id              INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "    id              SERIAL PRIMARY KEY," +
                     "    username        TEXT NOT NULL UNIQUE," +
                     "    password        TEXT NOT NULL," +
                     "    role            TEXT NOT NULL DEFAULT 'STAFF'" +
