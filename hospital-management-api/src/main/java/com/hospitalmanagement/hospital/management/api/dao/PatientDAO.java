@@ -93,4 +93,18 @@ public class PatientDAO {
             stmt.executeUpdate();
         }
     }
+
+    public int getTodayPatientsCount(String todayDate) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM patients WHERE admit_date = ?";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, todayDate);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
 }

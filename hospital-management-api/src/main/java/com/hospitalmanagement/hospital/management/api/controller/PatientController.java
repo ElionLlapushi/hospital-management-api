@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -30,6 +31,13 @@ public class PatientController {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet");
         }
         return patient;
+    }
+
+    @GetMapping("/stats/today")
+    public ResponseEntity<Integer> getTodayPatientsCount() throws SQLException {
+        String today = LocalDate.now().toString();
+        int count = patientDAO.getTodayPatientsCount(today);
+        return ResponseEntity.ok(count);
     }
 
     @PostMapping
