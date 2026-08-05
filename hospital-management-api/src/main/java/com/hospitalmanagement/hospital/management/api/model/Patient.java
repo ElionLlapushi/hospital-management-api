@@ -1,10 +1,6 @@
 package com.hospitalmanagement.hospital.management.api.model;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 public class Patient {
 
@@ -37,11 +33,29 @@ public class Patient {
 
     private String username;
 
-    public Patient() {
-    }
+    // Fushat e reja klinike
+    private String email;
+    private String bloodGroup;
+    private String allergies;
+    private String emergencyContact;
+    private String emergencyPhone;
+    private String dateOfBirth;
+    private String medicalHistory;
+    private String insuranceNumber;
+    private String occupation;
+    private double weight;
+    private double height;
+    private String status; // Active, Discharged
+    private String photoUrl;
+
+    public Patient() {}
 
     public Patient(int id, String name, int age, String gender, String phone,
-                   String address, String disease, String admitDate, String username) {
+                   String address, String disease, String admitDate, String username,
+                   String email, String bloodGroup, String allergies, String emergencyContact,
+                   String emergencyPhone, String dateOfBirth, String medicalHistory,
+                   String insuranceNumber, String occupation, double weight, double height,
+                   String status, String photoUrl) {
         this.id = id;
         this.name = name;
         this.age = age;
@@ -51,8 +65,22 @@ public class Patient {
         this.disease = disease;
         this.admitDate = admitDate;
         this.username = username;
+        this.email = email;
+        this.bloodGroup = bloodGroup;
+        this.allergies = allergies;
+        this.emergencyContact = emergencyContact;
+        this.emergencyPhone = emergencyPhone;
+        this.dateOfBirth = dateOfBirth;
+        this.medicalHistory = medicalHistory;
+        this.insuranceNumber = insuranceNumber;
+        this.occupation = occupation;
+        this.weight = weight;
+        this.height = height;
+        this.status = status;
+        this.photoUrl = photoUrl;
     }
 
+    // Getters
     public int getId() { return id; }
     public String getName() { return name; }
     public int getAge() { return age; }
@@ -62,7 +90,21 @@ public class Patient {
     public String getDisease() { return disease; }
     public String getAdmitDate() { return admitDate; }
     public String getUsername() { return username; }
+    public String getEmail() { return email; }
+    public String getBloodGroup() { return bloodGroup; }
+    public String getAllergies() { return allergies; }
+    public String getEmergencyContact() { return emergencyContact; }
+    public String getEmergencyPhone() { return emergencyPhone; }
+    public String getDateOfBirth() { return dateOfBirth; }
+    public String getMedicalHistory() { return medicalHistory; }
+    public String getInsuranceNumber() { return insuranceNumber; }
+    public String getOccupation() { return occupation; }
+    public double getWeight() { return weight; }
+    public double getHeight() { return height; }
+    public String getStatus() { return status; }
+    public String getPhotoUrl() { return photoUrl; }
 
+    // Setters
     public void setId(int id) { this.id = id; }
     public void setName(String name) { this.name = name; }
     public void setAge(int age) { this.age = age; }
@@ -72,10 +114,17 @@ public class Patient {
     public void setDisease(String disease) { this.disease = disease; }
     public void setAdmitDate(String admitDate) { this.admitDate = admitDate; }
     public void setUsername(String username) { this.username = username; }
-
-    @Override
-    public String toString() {
-        return String.format("ID:%-4d | User:%-10s | %-20s | Age:%-3d | %-6s | %-12s | %-15s | %-15s | Admitted:%s",
-                id, username, name, age, gender, phone, address, disease, admitDate);
-    }
+    public void setEmail(String email) { this.email = email; }
+    public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
+    public void setAllergies(String allergies) { this.allergies = allergies; }
+    public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
+    public void setEmergencyPhone(String emergencyPhone) { this.emergencyPhone = emergencyPhone; }
+    public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public void setMedicalHistory(String medicalHistory) { this.medicalHistory = medicalHistory; }
+    public void setInsuranceNumber(String insuranceNumber) { this.insuranceNumber = insuranceNumber; }
+    public void setOccupation(String occupation) { this.occupation = occupation; }
+    public void setWeight(double weight) { this.weight = weight; }
+    public void setHeight(double height) { this.height = height; }
+    public void setStatus(String status) { this.status = status; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 }
