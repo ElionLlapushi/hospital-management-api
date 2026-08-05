@@ -22,18 +22,17 @@ public class PatientController {
     private final PatientDAO patientDAO = new PatientDAO();
     private final WhatsAppService whatsAppService = new WhatsAppService();
 
-    // Metodë ndihmëse për të marrë clinicId (mund ta përshtatësh sipas mënyrës se si e ruan te JWT token)
+    // Metodë e përditësuar për të marrë clinicId direkt nga detajet e vendosura në JwtAuthFilter
     private int getCurrentClinicId() {
-        // Për momentin e marrim si integer nga detajet e autentifikimit ose e përshtati sipas logjikës sate të tokenit
-        // P.sh: return (int) SecurityContextHolder.getContext().getAuthentication().getDetails();
-        // Ose nëse e ruani te Credentials/Principal:
         try {
-            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            // Nëse ruhet si ID direkte ose string, e konvertojmë. Këtu po vendosim një shembull standard:
-            return Integer.parseInt(principal.toString());
+            Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
+            if (details instanceof Integer) {
+                return (Integer) details;
+            }
         } catch (Exception e) {
-            return 1; // Vlera e paracaktuar për testim nëse nuk është mapuar ende plotësisht në token
+            // Ignoron gabimin dhe kalon te vlera parazgjedhje
         }
+        return 1; // Vlera e paracaktuar nëse dështon
     }
 
     @GetMapping

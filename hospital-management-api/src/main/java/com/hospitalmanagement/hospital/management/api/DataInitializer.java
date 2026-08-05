@@ -19,7 +19,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (userDAO.getUserByUsername("admin") == null) {
             String hashedPassword = passwordEncoder.encode("admin123");
-            userDAO.addUser("admin", hashedPassword, "ADMIN");
+            userDAO.addUser("admin", hashedPassword, "ADMIN",1);
             System.out.println(">>> System Initialized: Default admin account created (admin / admin123)");
         } else {
             System.out.println(">>> DataInitializer: Admin user already exists.");

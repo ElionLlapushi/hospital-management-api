@@ -19,10 +19,8 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-
     @Autowired
     private JwtUtil jwtUtil;
-
 
     @Override
     protected void doFilterInternal(
@@ -31,11 +29,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-
         String path = request.getServletPath();
 
-
-        // Allow Swagger and OpenAPI without JWT
+        // Lejo Swagger dhe OpenAPI pa JWT
         if (path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs")
                 || path.equals("/swagger-ui.html")) {
@@ -44,37 +40,31 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-
         String authHeader = request.getHeader("Authorization");
 
-
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
             String token = authHeader.substring(7);
 
-
             if (jwtUtil.isTokenValid(token)) {
-
                 String username = jwtUtil.extractUsername(token);
                 String role = jwtUtil.extractRole(token);
-
+                int clinicId = jwtUtil.extractClinicId(token);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 username,
                                 null,
-                                List.of(
-                                        new SimpleGrantedAuthority("ROLE_" + role)
-                                )
+                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
                         );
 
+                // Vendosim clinicId te detajet e autentifikimit
+                authentication.setDetails(clinicId);
 
                 SecurityContextHolder
                         .getContext()
                         .setAuthentication(authentication);
             }
         }
-
 
         filterChain.doFilter(request, response);
     }

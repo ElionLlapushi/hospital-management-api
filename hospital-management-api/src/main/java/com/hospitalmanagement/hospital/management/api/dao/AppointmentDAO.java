@@ -9,7 +9,8 @@ import java.util.List;
 
 public class AppointmentDAO {
 
-    public int bookAppointment(int patientId, int doctorId, String date) throws SQLException {
+    public int bookAppointment(int patientId, int doctorId, String date, int clinicId) throws SQLException {
+        // Mund të shtosh një kontroll se pacienti i përket kësaj klinike nëse dëshiron siguri shtesë
         String sql = "INSERT INTO appointments (patient_id, doctor_id, appointment_date, status) " +
                 "VALUES (?, ?, ?, 'Scheduled')";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -24,7 +25,7 @@ public class AppointmentDAO {
         return -1;
     }
 
-    // JOIN me tabelën patients për të siguruar izolimin përmes username të pacientit
+    // JOIN me tabelën patients për të siguruar izolimin përmes clinic_id të klinikës
     private static final String SELECT_WITH_NAMES =
             "SELECT a.id, a.patient_id, a.doctor_id, p.name AS patient_name, " +
                     "d.name AS doctor_name, a.appointment_date, a.status " +
@@ -32,11 +33,11 @@ public class AppointmentDAO {
                     "JOIN patients p ON a.patient_id = p.id " +
                     "JOIN doctors d ON a.doctor_id = d.id ";
 
-    public List<Appointment> getAllAppointments(String username) throws SQLException {
+    public List<Appointment> getAllAppointments(int clinicId) throws SQLException {
         List<Appointment> list = new ArrayList<>();
-        String sql = SELECT_WITH_NAMES + "WHERE p.username = ? ORDER BY a.id";
+        String sql = SELECT_WITH_NAMES + "WHERE p.clinic_id = ? ORDER BY a.id";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
-            stmt.setString(1, username);
+            stmt.setInt(1, clinicId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) list.add(mapRow(rs));
             }
@@ -44,14 +45,14 @@ public class AppointmentDAO {
         return list;
     }
 
-    public List<Appointment> getAppointmentsByDoctorAndDate(int doctorId, String date, String username) throws SQLException {
+    public List<Appointment> getAppointmentsByDoctorAndDate(int doctorId, String date, int clinicId) throws SQLException {
         List<Appointment> list = new ArrayList<>();
-        String sql = SELECT_WITH_NAMES + "WHERE a.doctor_id = ? AND a.appointment_date LIKE ? AND p.username = ? ORDER BY a.id";
+        String sql = SELECT_WITH_NAMES + "WHERE a.doctor_id = ? AND a.appointment_date LIKE ? AND p.clinic_id = ? ORDER BY a.id";
 
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setInt(1, doctorId);
             stmt.setString(2, date + "%");
-            stmt.setString(3, username);
+            stmt.setInt(3, clinicId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
@@ -61,22 +62,22 @@ public class AppointmentDAO {
         return list;
     }
 
-    public boolean updateStatus(int appointmentId, String status, String username) throws SQLException {
-        // Sigurohemi që takimi i përket një pacienti të këtij përdoruesi
-        String sql = "UPDATE appointments SET status = ? WHERE id = ? AND patient_id IN (SELECT id FROM patients WHERE username = ?)";
+    public boolean updateStatus(int appointmentId, String status, int clinicId) throws SQLException {
+        // Sigurohemi që takimi i përket një pacienti të kësaj klinike
+        String sql = "UPDATE appointments SET status = ? WHERE id = ? AND patient_id IN (SELECT id FROM patients WHERE clinic_id = ?)";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setString(1, status);
             stmt.setInt(2, appointmentId);
-            stmt.setString(3, username);
+            stmt.setInt(3, clinicId);
             return stmt.executeUpdate() > 0;
         }
     }
 
-    public boolean cancelAppointment(int appointmentId, String username) throws SQLException {
-        String sql = "DELETE FROM appointments WHERE id = ? AND patient_id IN (SELECT id FROM patients WHERE username = ?)";
+    public boolean cancelAppointment(int appointmentId, int clinicId) throws SQLException {
+        String sql = "DELETE FROM appointments WHERE id = ? AND patient_id IN (SELECT id FROM patients WHERE clinic_id = ?)";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setInt(1, appointmentId);
-            stmt.setString(2, username);
+            stmt.setInt(2, clinicId);
             return stmt.executeUpdate() > 0;
         }
     }

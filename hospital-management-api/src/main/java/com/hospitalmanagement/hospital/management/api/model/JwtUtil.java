@@ -14,10 +14,11 @@ public class JwtUtil {
     private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 orë
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, String role, int clinicId) {
         return Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)
+                .claim("clinicId", clinicId) // Shtojmë clinicId në token
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key)
@@ -40,6 +41,20 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .get("role");
+    }
+
+    public int extractClinicId(String token) {
+        Object clinicIdObj = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("clinicId");
+
+        if (clinicIdObj instanceof Number) {
+            return ((Number) clinicIdObj).intValue();
+        }
+        return 1; // Vlerë parazgjedhjeje nëse mungon
     }
 
     public boolean isTokenValid(String token) {

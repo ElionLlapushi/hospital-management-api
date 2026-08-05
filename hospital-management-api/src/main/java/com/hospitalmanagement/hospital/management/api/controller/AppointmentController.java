@@ -22,32 +22,46 @@ public class AppointmentController {
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final PatientDAO patientDAO = new PatientDAO();
 
+    // Metodë ndihmëse për të marrë clinicId nga detajet e tokenit JWT
+    private int getCurrentClinicId() {
+        try {
+            Object details = SecurityContextHolder.getContext().getAuthentication().getDetails();
+            if (details instanceof Integer) {
+                return (Integer) details;
+            }
+        } catch (Exception e) {
+            // Ignoron gabimin
+        }
+        return 1; // Vlera parazgjedhje
+    }
+
     @GetMapping
     public List<Appointment> getAllAppointments() throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return appointmentDAO.getAllAppointments(username);
+        int clinicId = getCurrentClinicId();
+        return appointmentDAO.getAllAppointments(clinicId);
     }
 
     @GetMapping("/doctor/{doctorId}/availability")
     public List<Appointment> getDoctorAvailability(@PathVariable int doctorId, @RequestParam String date) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return appointmentDAO.getAppointmentsByDoctorAndDate(doctorId, date, username);
+        int clinicId = getCurrentClinicId();
+        return appointmentDAO.getAppointmentsByDoctorAndDate(doctorId, date, clinicId);
     }
 
     @PostMapping
     public ResponseEntity<String> bookAppointment(@Valid @RequestBody Appointment appointment) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        int clinicId = getCurrentClinicId();
 
-        // Verifikojmë që pacienti ekziston dhe i përket përdoruesit të loguar
-        Patient patient = patientDAO.getPatientByIdAndUsername(appointment.getPatientId(), username);
+        // Verifikojmë që pacienti ekziston dhe i përket klinikës aktuale
+        Patient patient = patientDAO.getPatientByIdAndClinicId(appointment.getPatientId(), clinicId);
         if (patient == null) {
-            throw new ResourceNotFoundException("Pacienti me ID " + appointment.getPatientId() + " nuk u gjet ose nuk ju përket juve");
+            throw new ResourceNotFoundException("Pacienti me ID " + appointment.getPatientId() + " nuk u gjet ose nuk i përket klinikës tuaj");
         }
 
         int id = appointmentDAO.bookAppointment(
                 appointment.getPatientId(),
                 appointment.getDoctorId(),
-                appointment.getAppointmentDate()
+                appointment.getAppointmentDate(),
+                clinicId
         );
 
         if (id != -1) {
@@ -59,8 +73,8 @@ public class AppointmentController {
 
     @PutMapping("/{id}/status")
     public ResponseEntity<String> updateAppointmentStatus(@PathVariable int id, @RequestParam String status) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        boolean updated = appointmentDAO.updateStatus(id, status, username);
+        int clinicId = getCurrentClinicId();
+        boolean updated = appointmentDAO.updateStatus(id, status, clinicId);
         if (updated) {
             return ResponseEntity.ok("Appointment status updated successfully");
         }
@@ -69,8 +83,8 @@ public class AppointmentController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> cancelAppointment(@PathVariable int id) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        boolean cancelled = appointmentDAO.cancelAppointment(id, username);
+        int clinicId = getCurrentClinicId();
+        boolean cancelled = appointmentDAO.cancelAppointment(id, clinicId);
         if (cancelled) {
             return ResponseEntity.ok("Appointment cancelled successfully");
         }
