@@ -35,11 +35,13 @@ public class Patient {
     @NotBlank(message = "Data e pranimit është fushë e detyrueshme")
     private String admitDate;
 
+    private String username;
+
     public Patient() {
     }
 
     public Patient(int id, String name, int age, String gender, String phone,
-                   String address, String disease, String admitDate) {
+                   String address, String disease, String admitDate, String username) {
         this.id = id;
         this.name = name;
         this.age = age;
@@ -48,6 +50,7 @@ public class Patient {
         this.address = address;
         this.disease = disease;
         this.admitDate = admitDate;
+        this.username = username;
     }
 
     public int getId() { return id; }
@@ -58,6 +61,7 @@ public class Patient {
     public String getAddress() { return address; }
     public String getDisease() { return disease; }
     public String getAdmitDate() { return admitDate; }
+    public String getUsername() { return username; }
 
     public void setId(int id) { this.id = id; }
     public void setName(String name) { this.name = name; }
@@ -67,10 +71,11 @@ public class Patient {
     public void setAddress(String address) { this.address = address; }
     public void setDisease(String disease) { this.disease = disease; }
     public void setAdmitDate(String admitDate) { this.admitDate = admitDate; }
+    public void setUsername(String username) { this.username = username; }
 
     @Override
     public String toString() {
-        return String.format("ID:%-4d | %-20s | Age:%-3d | %-6s | %-12s | %-15s | %-15s | Admitted:%s",
-                id, name, age, gender, phone, address, disease, admitDate);
+        return String.format("ID:%-4d | User:%-10s | %-20s | Age:%-3d | %-6s | %-12s | %-15s | %-15s | Admitted:%s",
+                id, username, name, age, gender, phone, address, disease, admitDate);
     }
 }

@@ -6,6 +6,7 @@ import com.hospitalmanagement.hospital.management.api.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
@@ -21,12 +22,15 @@ public class PatientController {
 
     @GetMapping
     public List<Patient> getAllPatients() throws SQLException {
-        return patientDAO.getAllPatients();
+        // Marrim username-in e përdoruesit të loguar nga token-i
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return patientDAO.getPatientsByUsername(username);
     }
 
     @GetMapping("/{id}")
     public Patient getPatientById(@PathVariable int id) throws SQLException {
-        Patient patient = patientDAO.getPatientById(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Patient patient = patientDAO.getPatientByIdAndUsername(id, username);
         if (patient == null) {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet");
         }
@@ -35,25 +39,32 @@ public class PatientController {
 
     @GetMapping("/stats/today")
     public ResponseEntity<Integer> getTodayPatientsCount() throws SQLException {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         String today = LocalDate.now().toString();
-        int count = patientDAO.getTodayPatientsCount(today);
+        int count = patientDAO.getTodayPatientsCountByUsername(today, username);
         return ResponseEntity.ok(count);
     }
 
     @PostMapping
     public ResponseEntity<Patient> addPatient(@Valid @RequestBody Patient patient) throws SQLException {
+        // Vendosim automatikisht username-in e përdoruesit të loguar para se ta ruajmë
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        patient.setUsername(username);
+
         patientDAO.addPatient(patient);
         return new ResponseEntity<>(patient, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Patient> updatePatient(@PathVariable int id, @Valid @RequestBody Patient patientDetails) throws SQLException {
-        Patient existingPatient = patientDAO.getPatientById(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Patient existingPatient = patientDAO.getPatientByIdAndUsername(id, username);
         if (existingPatient == null) {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet për t'u përditësuar");
         }
 
         patientDetails.setId(id);
+        patientDetails.setUsername(username);
         patientDAO.updatePatient(patientDetails);
 
         return ResponseEntity.ok(patientDetails);
@@ -61,7 +72,8 @@ public class PatientController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePatient(@PathVariable int id) throws SQLException {
-        Patient patient = patientDAO.getPatientById(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Patient patient = patientDAO.getPatientByIdAndUsername(id, username);
         if (patient == null) {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet për t'u fshirë");
         }
