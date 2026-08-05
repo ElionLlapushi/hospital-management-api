@@ -26,30 +26,37 @@ public class BillDAO {
 
     private static final String SELECT_WITH_NAME =
             "SELECT b.id, b.patient_id, p.name AS patient_name, b.description, b.amount, b.paid, b.bill_date " +
-            "FROM bills b JOIN patients p ON b.patient_id = p.id ";
+                    "FROM bills b JOIN patients p ON b.patient_id = p.id ";
 
-    public List<Bill> getAllBills() throws SQLException {
+    public List<Bill> getAllBills(String username) throws SQLException {
         List<Bill> list = new ArrayList<>();
-        try (Statement stmt = Database.getConnection().createStatement();
-             ResultSet rs = stmt.executeQuery(SELECT_WITH_NAME + "ORDER BY b.id")) {
-            while (rs.next()) list.add(mapRow(rs));
+        String sql = SELECT_WITH_NAME + "WHERE p.username = ? ORDER BY b.id";
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
         }
         return list;
     }
 
-    public List<Bill> getUnpaidBills() throws SQLException {
+    public List<Bill> getUnpaidBills(String username) throws SQLException {
         List<Bill> list = new ArrayList<>();
-        try (Statement stmt = Database.getConnection().createStatement();
-             ResultSet rs = stmt.executeQuery(SELECT_WITH_NAME + "WHERE b.paid = 0 ORDER BY b.id")) {
-            while (rs.next()) list.add(mapRow(rs));
+        String sql = SELECT_WITH_NAME + "WHERE b.paid = 0 AND p.username = ? ORDER BY b.id";
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
         }
         return list;
     }
 
-    public boolean markAsPaid(int billId) throws SQLException {
-        String sql = "UPDATE bills SET paid = 1 WHERE id = ?";
+    public boolean markAsPaid(int billId, String username) throws SQLException {
+        String sql = "UPDATE bills SET paid = 1 WHERE id = ? AND patient_id IN (SELECT id FROM patients WHERE username = ?)";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setInt(1, billId);
+            stmt.setString(2, username);
             return stmt.executeUpdate() > 0;
         }
     }

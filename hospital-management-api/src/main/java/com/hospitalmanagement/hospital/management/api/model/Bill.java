@@ -22,8 +22,11 @@ public class Bill {
 
     public int getId() { return id; }
     public int getPatientId() { return patientId; }
+    public String getPatientName() { return patientName; }
+    public String getDescription() { return description; }
     public double getAmount() { return amount; }
     public boolean isPaid() { return paid; }
+    public String getBillDate() { return billDate; }
 
     @Override
     public String toString() {
