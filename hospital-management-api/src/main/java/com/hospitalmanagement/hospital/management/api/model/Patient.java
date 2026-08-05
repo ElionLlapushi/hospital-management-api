@@ -33,7 +33,10 @@ public class Patient {
 
     private String username;
 
-    // Fushat e reja klinike
+    // Fusha e re për Multi-Tenancy (ID-ja e klinikës)
+    private int clinicId;
+
+    // Fushat e tjera klinike
     private String email;
     private String bloodGroup;
     private String allergies;
@@ -52,10 +55,10 @@ public class Patient {
 
     public Patient(int id, String name, int age, String gender, String phone,
                    String address, String disease, String admitDate, String username,
-                   String email, String bloodGroup, String allergies, String emergencyContact,
-                   String emergencyPhone, String dateOfBirth, String medicalHistory,
-                   String insuranceNumber, String occupation, double weight, double height,
-                   String status, String photoUrl) {
+                   int clinicId, String email, String bloodGroup, String allergies,
+                   String emergencyContact, String emergencyPhone, String dateOfBirth,
+                   String medicalHistory, String insuranceNumber, String occupation,
+                   double weight, double height, String status, String photoUrl) {
         this.id = id;
         this.name = name;
         this.age = age;
@@ -65,6 +68,7 @@ public class Patient {
         this.disease = disease;
         this.admitDate = admitDate;
         this.username = username;
+        this.clinicId = clinicId;
         this.email = email;
         this.bloodGroup = bloodGroup;
         this.allergies = allergies;
@@ -90,6 +94,7 @@ public class Patient {
     public String getDisease() { return disease; }
     public String getAdmitDate() { return admitDate; }
     public String getUsername() { return username; }
+    public int getClinicId() { return clinicId; }
     public String getEmail() { return email; }
     public String getBloodGroup() { return bloodGroup; }
     public String getAllergies() { return allergies; }
@@ -114,6 +119,7 @@ public class Patient {
     public void setDisease(String disease) { this.disease = disease; }
     public void setAdmitDate(String admitDate) { this.admitDate = admitDate; }
     public void setUsername(String username) { this.username = username; }
+    public void setClinicId(int clinicId) { this.clinicId = clinicId; }
     public void setEmail(String email) { this.email = email; }
     public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
     public void setAllergies(String allergies) { this.allergies = allergies; }

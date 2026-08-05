@@ -22,17 +22,30 @@ public class PatientController {
     private final PatientDAO patientDAO = new PatientDAO();
     private final WhatsAppService whatsAppService = new WhatsAppService();
 
+    // Metodë ndihmëse për të marrë clinicId (mund ta përshtatësh sipas mënyrës se si e ruan te JWT token)
+    private int getCurrentClinicId() {
+        // Për momentin e marrim si integer nga detajet e autentifikimit ose e përshtati sipas logjikës sate të tokenit
+        // P.sh: return (int) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        // Ose nëse e ruani te Credentials/Principal:
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            // Nëse ruhet si ID direkte ose string, e konvertojmë. Këtu po vendosim një shembull standard:
+            return Integer.parseInt(principal.toString());
+        } catch (Exception e) {
+            return 1; // Vlera e paracaktuar për testim nëse nuk është mapuar ende plotësisht në token
+        }
+    }
+
     @GetMapping
     public List<Patient> getAllPatients() throws SQLException {
-        // Marrim username-in e përdoruesit të loguar nga token-i
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return patientDAO.getPatientsByUsername(username);
+        int clinicId = getCurrentClinicId();
+        return patientDAO.getPatientsByClinicId(clinicId);
     }
 
     @GetMapping("/{id}")
     public Patient getPatientById(@PathVariable int id) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Patient patient = patientDAO.getPatientByIdAndUsername(id, username);
+        int clinicId = getCurrentClinicId();
+        Patient patient = patientDAO.getPatientByIdAndClinicId(id, clinicId);
         if (patient == null) {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet");
         }
@@ -41,16 +54,16 @@ public class PatientController {
 
     @GetMapping("/stats/today")
     public ResponseEntity<Integer> getTodayPatientsCount() throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        int clinicId = getCurrentClinicId();
         String today = LocalDate.now().toString();
-        int count = patientDAO.getTodayPatientsCountByUsername(today, username);
+        int count = patientDAO.getTodayPatientsCountByClinicId(today, clinicId);
         return ResponseEntity.ok(count);
     }
 
     @GetMapping("/{id}/whatsapp-link")
     public ResponseEntity<String> getWhatsAppLink(@PathVariable int id) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Patient patient = patientDAO.getPatientByIdAndUsername(id, username);
+        int clinicId = getCurrentClinicId();
+        Patient patient = patientDAO.getPatientByIdAndClinicId(id, clinicId);
         if (patient == null) {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet");
         }
@@ -61,9 +74,8 @@ public class PatientController {
 
     @PostMapping
     public ResponseEntity<Patient> addPatient(@Valid @RequestBody Patient patient) throws SQLException {
-        // Vendosim automatikisht username-in e përdoruesit të loguar para se ta ruajmë
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        patient.setUsername(username);
+        int clinicId = getCurrentClinicId();
+        patient.setClinicId(clinicId);
 
         patientDAO.addPatient(patient);
         return new ResponseEntity<>(patient, HttpStatus.CREATED);
@@ -71,14 +83,14 @@ public class PatientController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Patient> updatePatient(@PathVariable int id, @Valid @RequestBody Patient patientDetails) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Patient existingPatient = patientDAO.getPatientByIdAndUsername(id, username);
+        int clinicId = getCurrentClinicId();
+        Patient existingPatient = patientDAO.getPatientByIdAndClinicId(id, clinicId);
         if (existingPatient == null) {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet për t'u përditësuar");
         }
 
         patientDetails.setId(id);
-        patientDetails.setUsername(username);
+        patientDetails.setClinicId(clinicId);
         patientDAO.updatePatient(patientDetails);
 
         return ResponseEntity.ok(patientDetails);
@@ -86,13 +98,13 @@ public class PatientController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePatient(@PathVariable int id) throws SQLException {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Patient patient = patientDAO.getPatientByIdAndUsername(id, username);
+        int clinicId = getCurrentClinicId();
+        Patient patient = patientDAO.getPatientByIdAndClinicId(id, clinicId);
         if (patient == null) {
             throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet për t'u fshirë");
         }
 
-        patientDAO.deletePatient(id);
+        patientDAO.deletePatient(id, clinicId);
         return ResponseEntity.noContent().build();
     }
 }

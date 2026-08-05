@@ -10,9 +10,10 @@ import java.util.List;
 public class PatientDAO {
 
     static {
-        // Siguron që të gjitha kolonat e reja ekzistojnë në tabelën patients
+        // Siguron që kolona clinic_id dhe kolonat e tjera ekzistojnë në tabelën patients
         try (Connection conn = Database.getConnection();
              Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("ALTER TABLE patients ADD COLUMN IF NOT EXISTS clinic_id INT;");
             stmt.executeUpdate("ALTER TABLE patients ADD COLUMN IF NOT EXISTS username VARCHAR(255);");
             stmt.executeUpdate("ALTER TABLE patients ADD COLUMN IF NOT EXISTS email VARCHAR(255);");
             stmt.executeUpdate("ALTER TABLE patients ADD COLUMN IF NOT EXISTS blood_group VARCHAR(10);");
@@ -43,6 +44,7 @@ public class PatientDAO {
                 rs.getString("disease"),
                 rs.getString("admit_date"),
                 rs.getString("username"),
+                rs.getInt("clinic_id"),
                 rs.getString("email"),
                 rs.getString("blood_group"),
                 rs.getString("allergies"),
@@ -59,12 +61,12 @@ public class PatientDAO {
         );
     }
 
-    public List<Patient> getPatientsByUsername(String username) throws SQLException {
+    public List<Patient> getPatientsByClinicId(int clinicId) throws SQLException {
         List<Patient> list = new ArrayList<>();
-        String sql = "SELECT * FROM patients WHERE username = ?";
+        String sql = "SELECT * FROM patients WHERE clinic_id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
+            stmt.setInt(1, clinicId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapResultSetToPatient(rs));
@@ -74,12 +76,12 @@ public class PatientDAO {
         return list;
     }
 
-    public Patient getPatientByIdAndUsername(int id, String username) throws SQLException {
-        String sql = "SELECT * FROM patients WHERE id = ? AND username = ?";
+    public Patient getPatientByIdAndClinicId(int id, int clinicId) throws SQLException {
+        String sql = "SELECT * FROM patients WHERE id = ? AND clinic_id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
-            stmt.setString(2, username);
+            stmt.setInt(2, clinicId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return mapResultSetToPatient(rs);
@@ -91,9 +93,9 @@ public class PatientDAO {
 
     public void addPatient(Patient p) throws SQLException {
         String sql = "INSERT INTO patients (name, age, gender, phone, address, disease, admit_date, username, " +
-                "email, blood_group, allergies, emergency_contact, emergency_phone, date_of_birth, " +
+                "clinic_id, email, blood_group, allergies, emergency_contact, emergency_phone, date_of_birth, " +
                 "medical_history, insurance_number, occupation, weight, height, status, photo_url) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, p.getName());
@@ -104,19 +106,20 @@ public class PatientDAO {
             stmt.setString(6, p.getDisease());
             stmt.setString(7, p.getAdmitDate());
             stmt.setString(8, p.getUsername());
-            stmt.setString(9, p.getEmail());
-            stmt.setString(10, p.getBloodGroup());
-            stmt.setString(11, p.getAllergies());
-            stmt.setString(12, p.getEmergencyContact());
-            stmt.setString(13, p.getEmergencyPhone());
-            stmt.setString(14, p.getDateOfBirth());
-            stmt.setString(15, p.getMedicalHistory());
-            stmt.setString(16, p.getInsuranceNumber());
-            stmt.setString(17, p.getOccupation());
-            stmt.setDouble(18, p.getWeight());
-            stmt.setDouble(19, p.getHeight());
-            stmt.setString(20, p.getStatus());
-            stmt.setString(21, p.getPhotoUrl());
+            stmt.setInt(9, p.getClinicId());
+            stmt.setString(10, p.getEmail());
+            stmt.setString(11, p.getBloodGroup());
+            stmt.setString(12, p.getAllergies());
+            stmt.setString(13, p.getEmergencyContact());
+            stmt.setString(14, p.getEmergencyPhone());
+            stmt.setString(15, p.getDateOfBirth());
+            stmt.setString(16, p.getMedicalHistory());
+            stmt.setString(17, p.getInsuranceNumber());
+            stmt.setString(18, p.getOccupation());
+            stmt.setDouble(19, p.getWeight());
+            stmt.setDouble(20, p.getHeight());
+            stmt.setString(21, p.getStatus());
+            stmt.setString(22, p.getPhotoUrl());
             stmt.executeUpdate();
         }
     }
@@ -126,7 +129,7 @@ public class PatientDAO {
                 "admit_date = ?, email = ?, blood_group = ?, allergies = ?, emergency_contact = ?, " +
                 "emergency_phone = ?, date_of_birth = ?, medical_history = ?, insurance_number = ?, " +
                 "occupation = ?, weight = ?, height = ?, status = ?, photo_url = ? " +
-                "WHERE id = ? AND username = ?";
+                "WHERE id = ? AND clinic_id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, p.getName());
@@ -150,26 +153,27 @@ public class PatientDAO {
             stmt.setString(19, p.getStatus());
             stmt.setString(20, p.getPhotoUrl());
             stmt.setInt(21, p.getId());
-            stmt.setString(22, p.getUsername());
+            stmt.setInt(22, p.getClinicId());
             stmt.executeUpdate();
         }
     }
 
-    public void deletePatient(int id) throws SQLException {
-        String sql = "DELETE FROM patients WHERE id = ?";
+    public void deletePatient(int id, int clinicId) throws SQLException {
+        String sql = "DELETE FROM patients WHERE id = ? AND clinic_id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
+            stmt.setInt(2, clinicId);
             stmt.executeUpdate();
         }
     }
 
-    public int getTodayPatientsCountByUsername(String todayDate, String username) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM patients WHERE admit_date = ? AND username = ?";
+    public int getTodayPatientsCountByClinicId(String todayDate, int clinicId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM patients WHERE admit_date = ? AND clinic_id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, todayDate);
-            stmt.setString(2, username);
+            stmt.setInt(2, clinicId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
