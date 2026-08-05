@@ -9,6 +9,16 @@ import java.util.List;
 
 public class PatientDAO {
 
+    static {
+        // Sigurohet automatikisht që kolona username ekziston në databazë sa herë ngarkohet kjo klasë
+        try (Connection conn = Database.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("ALTER TABLE patients ADD COLUMN IF NOT EXISTS username VARCHAR(255);");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public List<Patient> getPatientsByUsername(String username) throws SQLException {
         List<Patient> list = new ArrayList<>();
         String sql = "SELECT * FROM patients WHERE username = ?";
