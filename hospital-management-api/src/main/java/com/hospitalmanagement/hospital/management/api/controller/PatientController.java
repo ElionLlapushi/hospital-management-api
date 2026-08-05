@@ -1,6 +1,7 @@
 package com.hospitalmanagement.hospital.management.api.controller;
 
 import com.hospitalmanagement.hospital.management.api.dao.PatientDAO;
+import com.hospitalmanagement.hospital.management.api.dao.WhatsAppService;
 import com.hospitalmanagement.hospital.management.api.model.Patient;
 import com.hospitalmanagement.hospital.management.api.ResourceNotFoundException;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ import java.util.List;
 public class PatientController {
 
     private final PatientDAO patientDAO = new PatientDAO();
+    private final WhatsAppService whatsAppService = new WhatsAppService();
 
     @GetMapping
     public List<Patient> getAllPatients() throws SQLException {
@@ -43,6 +45,18 @@ public class PatientController {
         String today = LocalDate.now().toString();
         int count = patientDAO.getTodayPatientsCountByUsername(today, username);
         return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/{id}/whatsapp-link")
+    public ResponseEntity<String> getWhatsAppLink(@PathVariable int id) throws SQLException {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Patient patient = patientDAO.getPatientByIdAndUsername(id, username);
+        if (patient == null) {
+            throw new ResourceNotFoundException("Pacienti me ID " + id + " nuk u gjet");
+        }
+
+        String link = whatsAppService.generateWhatsAppLink(patient.getPhone(), patient.getName(), patient.getAdmitDate());
+        return ResponseEntity.ok(link);
     }
 
     @PostMapping

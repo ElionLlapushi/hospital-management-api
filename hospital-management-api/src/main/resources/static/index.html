@@ -444,6 +444,9 @@
                         <button class="btn btn-sm btn-outline-warning border-0" onclick="editPatient(${p.id})" title="Ndrysho">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
+                        <button class="btn btn-sm btn-outline-success border-0" onclick="sendWhatsAppReminder(${p.id})" title="Dërgo WhatsApp">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </button>
                         <button class="btn btn-sm btn-outline-primary border-0" onclick="generatePDF(${p.id})" title="Shkarko PDF">
                             <i class="fa-solid fa-file-pdf"></i>
                         </button>
@@ -454,6 +457,33 @@
                 </tr>
             `;
         });
+    }
+
+    // DËRGIMI I KUJTESËS NË WHATSAPP
+    function sendWhatsAppReminder(id) {
+        const token = localStorage.getItem('jwtToken');
+
+        fetch(`${API_URL}/patients/${id}/whatsapp-link`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Nuk u arrit të gjendej linku i WhatsApp.');
+                }
+                return response.text();
+            })
+            .then(link => {
+                if (link && link.startsWith('http')) {
+                    window.open(link, '_blank');
+                } else {
+                    Swal.fire('Kujdes', 'Numri i telefonit mungon ose nuk është i vlefshëm!', 'warning');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Gabim', 'Nuk u realizua lidhja për WhatsApp!', 'error');
+            });
     }
 
     // REDAKTIMI I PACIENTIT (EDIT)
