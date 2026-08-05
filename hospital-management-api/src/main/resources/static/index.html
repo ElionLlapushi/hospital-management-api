@@ -177,6 +177,31 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold mb-1">Grupi i Gjakut</label>
+                                    <select id="pBloodGroup" class="form-select form-select-sm">
+                                        <option value="A+">A+</option><option value="A-">A-</option>
+                                        <option value="B+">B+</option><option value="B-">B-</option>
+                                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                                        <option value="O+">O+</option><option value="O-">O-</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold mb-1">Alergjitë</label>
+                                    <input type="text" id="pAllergies" class="form-control form-control-sm" placeholder="P.sh. Penicilinë">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold mb-1">Kontakt Urgjence</label>
+                                    <input type="text" id="pEmergencyContact" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold mb-1">Tel. Urgjence</label>
+                                    <input type="text" id="pEmergencyPhone" class="form-control form-control-sm">
+                                </div>
+                            </div>
                             <div class="mb-2">
                                 <label class="form-label small fw-bold mb-1">Mjeku Trajtues</label>
                                 <select id="pDoctor" class="form-select form-select-sm" required>
@@ -273,6 +298,8 @@
             <p><strong>Data e Pranimit:</strong> <span id="pdfDate"></span></p>
             <p><strong>Emri & Mbiemri:</strong> <span id="pdfName"></span></p>
             <p><strong>Mosha:</strong> <span id="pdfAge"></span> vjeç | <strong>Gjinia:</strong> <span id="pdfGender"></span></p>
+            <p><strong>Grupi i Gjakut:</strong> <span id="pdfBloodGroup"></span> | <strong>Alergjitë:</strong> <span id="pdfAllergies"></span></p>
+            <p><strong>Kontakt Urgjence:</strong> <span id="pdfEmergencyContact"></span> (<span id="pdfEmergencyPhone"></span>)</p>
             <p><strong>Adresa:</strong> <span id="pdfAddress"></span></p>
             <p><strong>Telefoni:</strong> <span id="pdfPhone"></span></p>
         </div>
@@ -347,7 +374,11 @@
             phone: document.getElementById('pPhone').value,
             address: document.getElementById('pAddress').value,
             disease: `${diseaseInput} (${doctorSelected})`,
-            admitDate: document.getElementById('pAdmitDate').value
+            admitDate: document.getElementById('pAdmitDate').value,
+            bloodGroup: document.getElementById('pBloodGroup').value,
+            allergies: document.getElementById('pAllergies').value,
+            emergencyContact: document.getElementById('pEmergencyContact').value,
+            emergencyPhone: document.getElementById('pEmergencyPhone').value
         };
 
         const isUpdate = !!pId;
@@ -398,7 +429,7 @@
                 renderTable(globalPatients);
             }
 
-            // Fetch Statistikën e Shtrimeve Sot nga Backend Endpoint-i i ri
+            // Fetch Statistikën e Shtrimeve Sot
             const statsResp = await fetch(`${API_URL}/patients/stats/today`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -426,7 +457,7 @@
             let diseaseClean = p.disease;
             let doctorName = "Dr. Përgjithshëm";
 
-            if (p.disease.includes('(')) {
+            if (p.disease && p.disease.includes('(')) {
                 const parts = p.disease.split('(');
                 diseaseClean = parts[0].trim();
                 doctorName = parts[1].replace(')', '').trim();
@@ -436,10 +467,10 @@
                 <tr>
                     <td class="fw-bold">#${p.id}</td>
                     <td><i class="fa-solid fa-user me-2 text-secondary opacity-50"></i>${p.name}</td>
-                    <td><span class="badge badge-disease px-2 py-1 rounded-2">${diseaseClean}</span></td>
+                    <td><span class="badge badge-disease px-2 py-1 rounded-2">${diseaseClean || ''}</span></td>
                     <td class="small text-muted"><i class="fa-solid fa-user-doctor me-1 text-primary"></i>${doctorName}</td>
-                    <td class="small">${p.phone}</td>
-                    <td class="small">${p.admitDate}</td>
+                    <td class="small">${p.phone || ''}</td>
+                    <td class="small">${p.admitDate || ''}</td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-warning border-0" onclick="editPatient(${p.id})" title="Ndrysho">
                             <i class="fa-solid fa-pen-to-square"></i>
@@ -492,15 +523,19 @@
         if (!patient) return;
 
         document.getElementById('pId').value = patient.id;
-        document.getElementById('pName').value = patient.name;
-        document.getElementById('pAge').value = patient.age;
+        document.getElementById('pName').value = patient.name || '';
+        document.getElementById('pAge').value = patient.age || '';
         document.getElementById('pGender').value = patient.gender || 'Male';
-        document.getElementById('pPhone').value = patient.phone;
-        document.getElementById('pAddress').value = patient.address;
-        document.getElementById('pAdmitDate').value = patient.admitDate;
+        document.getElementById('pBloodGroup').value = patient.bloodGroup || 'A+';
+        document.getElementById('pAllergies').value = patient.allergies || '';
+        document.getElementById('pEmergencyContact').value = patient.emergencyContact || '';
+        document.getElementById('pEmergencyPhone').value = patient.emergencyPhone || '';
+        document.getElementById('pPhone').value = patient.phone || '';
+        document.getElementById('pAddress').value = patient.address || '';
+        document.getElementById('pAdmitDate').value = patient.admitDate || '';
 
-        let diseaseClean = patient.disease;
-        if (patient.disease.includes('(')) {
+        let diseaseClean = patient.disease || '';
+        if (patient.disease && patient.disease.includes('(')) {
             const parts = patient.disease.split('(');
             diseaseClean = parts[0].trim();
             const doctor = parts[1].replace(')', '').trim();
@@ -526,8 +561,8 @@
     function filterPatients() {
         const query = document.getElementById('searchInput').value.toLowerCase();
         const filtered = globalPatients.filter(p =>
-            p.name.toLowerCase().includes(query) ||
-            p.disease.toLowerCase().includes(query)
+            (p.name && p.name.toLowerCase().includes(query)) ||
+            (p.disease && p.disease.toLowerCase().includes(query))
         );
         renderTable(filtered);
     }
@@ -537,22 +572,26 @@
         const patient = globalPatients.find(p => p.id === id);
         if (!patient) return;
 
-        let diseaseClean = patient.disease;
+        let diseaseClean = patient.disease || '';
         let doctorName = "Dr. Përgjithshëm";
 
-        if (patient.disease.includes('(')) {
+        if (patient.disease && patient.disease.includes('(')) {
             const parts = patient.disease.split('(');
             diseaseClean = parts[0].trim();
             doctorName = parts[1].replace(')', '').trim();
         }
 
         document.getElementById('pdfId').innerText = patient.id;
-        document.getElementById('pdfDate').innerText = patient.admitDate;
-        document.getElementById('pdfName').innerText = patient.name;
-        document.getElementById('pdfAge').innerText = patient.age;
+        document.getElementById('pdfDate').innerText = patient.admitDate || '';
+        document.getElementById('pdfName').innerText = patient.name || '';
+        document.getElementById('pdfAge').innerText = patient.age || '';
         document.getElementById('pdfGender').innerText = patient.gender || "Mashkull";
-        document.getElementById('pdfAddress').innerText = patient.address;
-        document.getElementById('pdfPhone').innerText = patient.phone;
+        document.getElementById('pdfBloodGroup').innerText = patient.bloodGroup || '-';
+        document.getElementById('pdfAllergies').innerText = patient.allergies || 'Asnjë';
+        document.getElementById('pdfEmergencyContact').innerText = patient.emergencyContact || '-';
+        document.getElementById('pdfEmergencyPhone').innerText = patient.emergencyPhone || '-';
+        document.getElementById('pdfAddress').innerText = patient.address || '';
+        document.getElementById('pdfPhone').innerText = patient.phone || '';
         document.getElementById('pdfDisease').innerText = diseaseClean;
         document.getElementById('pdfDoctor').innerText = doctorName;
 
@@ -560,7 +599,7 @@
 
         const opt = {
             margin:       10,
-            filename:     `Fatura_Pacienti_${patient.name.replace(/\s+/g, '_')}.pdf`,
+            filename:     `Fatura_Pacienti_${patient.name ? patient.name.replace(/\s+/g, '_') : 'detaje'}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -581,6 +620,10 @@
             Emri: p.name,
             Mosha: p.age,
             Gjinia: p.gender,
+            Grupi_Gjakut: p.bloodGroup,
+            Alergjitë: p.allergies,
+            Kontakt_Urgjence: p.emergencyContact,
+            Tel_Urgjence: p.emergencyPhone,
             Adresa: p.address,
             Telefoni: p.phone,
             Diagnoza_Dhe_Mjeku: p.disease,
