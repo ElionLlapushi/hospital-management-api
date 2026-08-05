@@ -24,7 +24,7 @@ public class AppointmentDAO {
         return -1;
     }
 
-    // JOIN me tabelat patients dhe doctors për të marrë emrat e lexueshëm
+    // JOIN me tabelën patients për të siguruar izolimin përmes username të pacientit
     private static final String SELECT_WITH_NAMES =
             "SELECT a.id, a.patient_id, a.doctor_id, p.name AS patient_name, " +
                     "d.name AS doctor_name, a.appointment_date, a.status " +
@@ -32,23 +32,26 @@ public class AppointmentDAO {
                     "JOIN patients p ON a.patient_id = p.id " +
                     "JOIN doctors d ON a.doctor_id = d.id ";
 
-    public List<Appointment> getAllAppointments() throws SQLException {
+    public List<Appointment> getAllAppointments(String username) throws SQLException {
         List<Appointment> list = new ArrayList<>();
-        try (Statement stmt = Database.getConnection().createStatement();
-             ResultSet rs = stmt.executeQuery(SELECT_WITH_NAMES + "ORDER BY a.id")) {
-            while (rs.next()) list.add(mapRow(rs));
+        String sql = SELECT_WITH_NAMES + "WHERE p.username = ? ORDER BY a.id";
+        try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
         }
         return list;
     }
 
-    // Metoda e re: Merr të gjitha vizitat e një mjeku për një datë të caktuar
-    public List<Appointment> getAppointmentsByDoctorAndDate(int doctorId, String date) throws SQLException {
+    public List<Appointment> getAppointmentsByDoctorAndDate(int doctorId, String date, String username) throws SQLException {
         List<Appointment> list = new ArrayList<>();
-        String sql = SELECT_WITH_NAMES + "WHERE a.doctor_id = ? AND a.appointment_date LIKE ? ORDER BY a.id";
+        String sql = SELECT_WITH_NAMES + "WHERE a.doctor_id = ? AND a.appointment_date LIKE ? AND p.username = ? ORDER BY a.id";
 
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setInt(1, doctorId);
             stmt.setString(2, date + "%");
+            stmt.setString(3, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
@@ -58,19 +61,22 @@ public class AppointmentDAO {
         return list;
     }
 
-    public boolean updateStatus(int appointmentId, String status) throws SQLException {
-        String sql = "UPDATE appointments SET status = ? WHERE id = ?";
+    public boolean updateStatus(int appointmentId, String status, String username) throws SQLException {
+        // Sigurohemi që takimi i përket një pacienti të këtij përdoruesi
+        String sql = "UPDATE appointments SET status = ? WHERE id = ? AND patient_id IN (SELECT id FROM patients WHERE username = ?)";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setString(1, status);
             stmt.setInt(2, appointmentId);
+            stmt.setString(3, username);
             return stmt.executeUpdate() > 0;
         }
     }
 
-    public boolean cancelAppointment(int appointmentId) throws SQLException {
-        String sql = "DELETE FROM appointments WHERE id = ?";
+    public boolean cancelAppointment(int appointmentId, String username) throws SQLException {
+        String sql = "DELETE FROM appointments WHERE id = ? AND patient_id IN (SELECT id FROM patients WHERE username = ?)";
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setInt(1, appointmentId);
+            stmt.setString(2, username);
             return stmt.executeUpdate() > 0;
         }
     }

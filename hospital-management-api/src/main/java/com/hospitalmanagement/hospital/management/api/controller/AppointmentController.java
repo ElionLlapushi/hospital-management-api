@@ -2,6 +2,7 @@ package com.hospitalmanagement.hospital.management.api.controller;
 
 import com.hospitalmanagement.hospital.management.api.dao.AppointmentDAO;
 import com.hospitalmanagement.hospital.management.api.model.Appointment;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
@@ -15,13 +16,14 @@ public class AppointmentController {
 
     @GetMapping
     public List<Appointment> getAllAppointments() throws SQLException {
-        return appointmentDAO.getAllAppointments();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return appointmentDAO.getAllAppointments(username);
     }
 
-    // Endpoint-i i ri për të kontrolluar oraret/rezervimet e mjekut në një datë të caktuar
     @GetMapping("/doctor/{doctorId}/availability")
     public List<Appointment> getDoctorAvailability(@PathVariable int doctorId, @RequestParam String date) throws SQLException {
-        return appointmentDAO.getAppointmentsByDoctorAndDate(doctorId, date);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return appointmentDAO.getAppointmentsByDoctorAndDate(doctorId, date, username);
     }
 
     @PostMapping
@@ -36,7 +38,8 @@ public class AppointmentController {
 
     @DeleteMapping("/{id}")
     public String cancelAppointment(@PathVariable int id) throws SQLException {
-        boolean cancelled = appointmentDAO.cancelAppointment(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        boolean cancelled = appointmentDAO.cancelAppointment(id, username);
         return cancelled ? "Appointment cancelled." : "Appointment not found.";
     }
 }
